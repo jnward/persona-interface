@@ -1,0 +1,13 @@
+# Core dependencies for persona steering backend
+fastapi
+uvicorn[standard]
+pydantic
+
+# ML dependencies
+torch
+transformers
+numpy
+
+# Optional but useful
+python-multipart  # For form data support
+httpx  # For testing

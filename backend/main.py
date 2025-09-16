@@ -95,13 +95,13 @@ async def generate(request: GenerationRequest):
         # Extract PC values from steering config
         pc_values = request.steering_config.get("pc_values", {})
 
-        # For Phase 1, we'll just do basic generation without steering
-        # In Phase 2, we'll use the pc_values to apply steering
+        # Generate with steering if PC values are provided
         content, terminating = generate_text(
             model=MODEL,
             tokenizer=TOKENIZER,
             messages=messages,
             num_tokens=request.num_tokens,
+            pca_vectors=PCA_COMPONENTS,
             steering_config=request.steering_config if pc_values else None,
             is_partial=request.is_partial
         )

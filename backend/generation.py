@@ -3,9 +3,11 @@ Text generation logic with optional steering.
 """
 
 import torch
+import numpy as np
 from typing import List, Dict, Tuple, Optional
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import config
+from steering import apply_steering
 
 
 def format_messages_for_chat(tokenizer: AutoTokenizer, messages: List[Dict[str, str]], is_partial: bool = False) -> str:
@@ -90,6 +92,7 @@ def generate_text(
     tokenizer: AutoTokenizer,
     messages: List[Dict[str, str]],
     num_tokens: int,
+    pca_vectors: Optional[np.ndarray] = None,
     steering_config: Optional[Dict[str, Dict[int, float]]] = None,
     temperature: float = None,
     top_p: float = None,
@@ -103,7 +106,8 @@ def generate_text(
         tokenizer: The tokenizer
         messages: List of conversation messages
         num_tokens: Number of tokens to generate
-        steering_config: Optional steering configuration (will be used in Phase 2)
+        pca_vectors: Optional PCA component vectors for steering
+        steering_config: Optional steering configuration with pc_values
         temperature: Sampling temperature (uses default if None)
         top_p: Top-p sampling parameter (uses default if None)
         is_partial: If True, last assistant message is incomplete (for step mode)
@@ -127,18 +131,26 @@ def generate_text(
     # Store the original input length
     input_length = inputs["input_ids"].shape[1]
 
-    # Generate
+    # Extract PC values if steering is requested
+    pc_values = None
+    if steering_config and "pc_values" in steering_config:
+        pc_values = steering_config["pc_values"]
+        # Convert string keys to int if needed
+        if pc_values and isinstance(next(iter(pc_values.keys())), str):
+            pc_values = {int(k): v for k, v in pc_values.items()}
+
+    # Generate with or without steering
     with torch.no_grad():
-        # Note: In Phase 2, we'll wrap this with steering context manager
-        outputs = model.generate(
-            **inputs,
-            max_new_tokens=num_tokens,
-            temperature=temperature,
-            top_p=top_p,
-            do_sample=config.DO_SAMPLE,
-            pad_token_id=tokenizer.eos_token_id,
-            repetition_penalty=config.DEFAULT_REPETITION_PENALTY
-        )
+        with apply_steering(model, pca_vectors, pc_values, layer=config.STEERING_LAYER):
+            outputs = model.generate(
+                **inputs,
+                max_new_tokens=num_tokens,
+                temperature=temperature,
+                top_p=top_p,
+                do_sample=config.DO_SAMPLE,
+                pad_token_id=tokenizer.eos_token_id,
+                repetition_penalty=config.DEFAULT_REPETITION_PENALTY
+            )
 
     # Decode only the new tokens (not the prompt)
     generated_ids = outputs[0][input_length:]
@@ -170,14 +182,14 @@ def generate_text_with_steering(
     messages: List[Dict[str, str]],
     num_tokens: int,
     pc_values: Dict[int, float],
-    pc_vectors,
+    pca_vectors: np.ndarray,
     layer: int = 22,
     temperature: float = None,
-    top_p: float = None
+    top_p: float = None,
+    is_partial: bool = False
 ) -> Tuple[str, bool]:
     """
     Generate text with PC-based steering applied.
-    This will be implemented in Phase 2.
 
     Args:
         model: The language model
@@ -189,15 +201,16 @@ def generate_text_with_steering(
         layer: Which layer to apply steering at
         temperature: Sampling temperature
         top_p: Top-p sampling parameter
+        is_partial: If True, last assistant message is incomplete
 
     Returns:
         Tuple of (generated_text, terminating_flag)
     """
-    # For Phase 1, just call regular generation
-    # In Phase 2, we'll add the steering logic here
     return generate_text(
         model, tokenizer, messages, num_tokens,
+        pca_vectors=pca_vectors,
         steering_config={"pc_values": pc_values},
         temperature=temperature,
-        top_p=top_p
+        top_p=top_p,
+        is_partial=is_partial
     )

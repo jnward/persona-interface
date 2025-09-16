@@ -92,6 +92,76 @@ def test_conversation():
         return False
 
 
+def test_steering_basic():
+    """Test that steering affects output."""
+    print("\nTesting basic steering functionality...")
+
+    # Test without steering
+    print("\n1. Without steering:")
+    request_data = {
+        "messages": [
+            {"role": "user", "content": "What are you?"}
+        ],
+        "steering_config": {"pc_values": {}},
+        "num_tokens": 30
+    }
+
+    response = requests.post(f"{API_URL}/api/generate", json=request_data)
+    if response.status_code != 200:
+        print(f"Error: {response.text}")
+        return False
+
+    baseline = response.json()
+    print(f"Response: {baseline['content'][:100]}...")
+
+    # Test with positive steering
+    print("\n2. With PC1=+3000:")
+    request_data["steering_config"] = {"pc_values": {"0": 3000}}
+
+    response = requests.post(f"{API_URL}/api/generate", json=request_data)
+    if response.status_code != 200:
+        print(f"Error: {response.text}")
+        return False
+
+    steered = response.json()
+    print(f"Response: {steered['content'][:100]}...")
+
+    # Check that outputs are different
+    if baseline['content'] != steered['content']:
+        print("✓ SUCCESS: Steering changes output!")
+        return True
+    else:
+        print("✗ FAILURE: Steering had no effect")
+        return False
+
+
+def test_multiple_pc_steering():
+    """Test combining multiple PC vectors."""
+    print("\nTesting multiple PC steering...")
+
+    request_data = {
+        "messages": [
+            {"role": "user", "content": "Hello"}
+        ],
+        "steering_config": {
+            "pc_values": {"0": 2000, "1": -1000, "3": 500}
+        },
+        "num_tokens": 30
+    }
+
+    print(f"Testing with PC1=+2000, PC2=-1000, PC4=+500")
+
+    response = requests.post(f"{API_URL}/api/generate", json=request_data)
+    if response.status_code != 200:
+        print(f"Error: {response.text}")
+        return False
+
+    result = response.json()
+    print(f"Response: {result['content']}")
+    print("✓ Multiple PC steering executed successfully")
+    return True
+
+
 def test_step_mode_comparison():
     """Compare regular generation with step-by-step to ensure they match."""
     print("\nTesting step mode vs regular generation (deterministic)...")
@@ -191,6 +261,8 @@ def main():
         ("Info Endpoint", test_info_endpoint),
         ("Basic Generation", test_basic_generation),
         ("Conversation", test_conversation),
+        ("Steering Basic", test_steering_basic),
+        ("Multiple PC Steering", test_multiple_pc_steering),
         ("Step Mode Comparison", test_step_mode_comparison)
     ]
 

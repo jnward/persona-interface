@@ -9,6 +9,20 @@ export default function SteeringPanel() {
 
   const hasAnyValues = Object.keys(pcValues).some(key => pcValues[Number(key)] !== 0);
 
+  // PC labels with their descriptions and recommended directions
+  const pcLabels = [
+    { name: 'PC1', desc: 'complexity', direction: 'neg' },
+    { name: 'PC2', desc: 'roleplaying', direction: 'neg' },
+    { name: 'PC3', desc: 'humanity', direction: 'pos' },
+    { name: 'PC4', desc: 'emotion', direction: 'neg' },
+    { name: 'PC5', desc: 'wisdom', direction: 'pos' },
+    { name: 'PC6', desc: 'confidence', direction: 'neg' },
+    { name: 'PC7', desc: 'naivete', direction: 'pos' },
+    { name: 'PC8', desc: '', direction: '' },
+    { name: 'PC9', desc: '', direction: '' },
+    { name: 'PC10', desc: '', direction: '' },
+  ];
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -23,11 +37,13 @@ export default function SteeringPanel() {
       </div>
 
       <div className={styles.sliders}>
-        {Array.from({ length: 10 }, (_, i) => (
+        {pcLabels.map((pc, i) => (
           <PCSlider
             key={i}
             pcIndex={i}
-            label={`PC${i + 1}`}
+            label={pc.name}
+            description={pc.desc}
+            recommendedDirection={pc.direction}
           />
         ))}
       </div>

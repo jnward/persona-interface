@@ -1,26 +1,28 @@
 .main {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: linear-gradient(to bottom, #f5f7fa, #e9ecef);
-  padding: 20px;
+  padding: 15px;
+  overflow: hidden;
 }
 
 .header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 15px;
+  flex-shrink: 0;
 }
 
 .header h1 {
-  margin: 0 0 8px 0;
-  font-size: 32px;
+  margin: 0 0 4px 0;
+  font-size: 24px;
   font-weight: 700;
   color: #333;
 }
 
 .header p {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   color: #666;
 }
 
@@ -28,22 +30,25 @@
   flex: 1;
   display: grid;
   grid-template-columns: 1fr 400px;
-  gap: 20px;
+  gap: 15px;
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+  min-height: 0; /* Important for grid to respect parent height */
 }
 
 .leftColumn {
   display: flex;
   flex-direction: column;
-  min-height: 600px;
+  min-height: 0; /* Allow shrinking */
 }
 
 .rightColumn {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
+  min-height: 0; /* Allow shrinking */
+  overflow-y: auto;
 }
 
 @media (max-width: 1024px) {

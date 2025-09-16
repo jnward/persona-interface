@@ -6,9 +6,11 @@ import styles from './PCSlider.module.css';
 interface PCSliderProps {
   pcIndex: number;
   label: string;
+  description?: string;
+  recommendedDirection?: string;
 }
 
-export default function PCSlider({ pcIndex, label }: PCSliderProps) {
+export default function PCSlider({ pcIndex, label, description, recommendedDirection }: PCSliderProps) {
   const { pcValues, setPCValue, resetPC } = useSteeringStore();
   const value = pcValues[pcIndex] || 0;
 
@@ -24,7 +26,17 @@ export default function PCSlider({ pcIndex, label }: PCSliderProps) {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <label className={styles.label}>{label}</label>
+        <div className={styles.labelGroup}>
+          <label className={styles.label}>{label}</label>
+          {description && (
+            <span className={styles.description}>
+              {description}
+              {recommendedDirection && (
+                <span className={styles.direction}>({recommendedDirection})</span>
+              )}
+            </span>
+          )}
+        </div>
         <span className={styles.value}>{value}</span>
       </div>
 

@@ -1,5 +1,48 @@
 # Persona Steering Interface - Design Document (v0)
 
+## Completion Status
+
+### ✅ Completed Features (Phases 1-4)
+
+**Backend (API)**
+- ✅ FastAPI server with single `/api/generate` endpoint
+- ✅ Gemma-3-12b model loaded and running
+- ✅ PCA vectors loaded from disk
+- ✅ PC-based steering with naive addition
+- ✅ Multi-turn conversation support
+- ✅ Message validation (alternation, roles, is_partial)
+- ✅ Deterministic generation mode for testing
+
+**Frontend (UI)**
+- ✅ Next.js React application
+- ✅ Chat interface with message history
+- ✅ Input field with Enter key support
+- ✅ PC sliders (PC1-PC10) with -5000 to +5000 range
+- ✅ Individual and "Reset All" buttons
+- ✅ Token count control (1-500)
+- ✅ Clear conversation button
+- ✅ Zustand state management
+- ✅ API integration
+- ✅ Minimal, clean styling
+- ✅ Responsive layout
+
+**Steering**
+- ✅ Single PC steering working
+- ✅ Multiple PC combination (naive addition)
+- ✅ Layer 22 targeting
+- ✅ All token positions
+- ✅ Verified steering affects output
+
+### ⏳ Remaining Features (Phase 5-6)
+
+- [ ] Step-by-step mode UI
+- [ ] Regenerate button for last response
+- [ ] Mid-generation steering changes
+- [ ] Context usage display
+- [ ] Current token display in step mode
+- [ ] Final polish and bug fixes
+- [ ] README documentation
+
 ## 1. Project Overview
 
 The Persona Steering Interface is an interactive web application that allows users to explore and control the behavior of the Gemma-3-12b language model through principal component (PC) steering. Users can adjust multiple PC sliders to influence the model's responses during text generation.
@@ -374,30 +417,30 @@ class TestGeneration:
 ## 9. Development Phases
 
 ### Phase 1: Minimal Backend
-- [ ] Set up FastAPI with single `/api/generate` endpoint
-- [ ] Load Gemma-3-12b model
-- [ ] Load PCA components from `/workspace/persona-subspace/roles/pca/layer22_pos23.pt`
-- [ ] Test basic generation without steering
+- [x] Set up FastAPI with single `/api/generate` endpoint
+- [x] Load Gemma-3-12b model
+- [x] Load PCA components from `/workspace/persona-subspace/roles/pca/layer22_pos23.pt`
+- [x] Test basic generation without steering
 
 ### Phase 2: Steering Implementation
-- [ ] Integrate ActivationSteering from existing code
-- [ ] Apply single PC steering vector
-- [ ] Combine multiple PC vectors (test scaling)
-- [ ] Verify steering affects output
+- [x] Integrate ActivationSteering from existing code
+- [x] Apply single PC steering vector
+- [x] Combine multiple PC vectors (test scaling)
+- [x] Verify steering affects output
 
 ### Phase 3: Chat Template
-- [ ] Apply proper Gemma-3-12b chat template
-- [ ] Test multi-turn conversations
-- [ ] Handle edge cases (empty messages, long context)
+- [x] Apply proper Gemma-3-12b chat template
+- [x] Test multi-turn conversations
+- [x] Handle edge cases (empty messages, long context)
 
 ### Phase 4: Frontend Foundation
-- [ ] Create Next.js project
-- [ ] Set up Zustand stores
-- [ ] Build chat UI components
-- [ ] Implement PC sliders (PC1-PC10)
+- [x] Create Next.js project
+- [x] Set up Zustand stores
+- [x] Build chat UI components
+- [x] Implement PC sliders (PC1-PC10)
 
 ### Phase 5: Integration
-- [ ] Connect frontend to backend
+- [x] Connect frontend to backend
 - [ ] Implement step-by-step mode (num_tokens: 1)
 - [ ] Add regeneration functionality
 - [ ] Test steering changes mid-generation

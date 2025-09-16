@@ -1,6 +1,7 @@
 """
 Configuration settings for the persona steering backend.
 """
+DEBUG = True
 
 # Model configuration
 MODEL_NAME = "google/gemma-3-12b-it"
@@ -15,6 +16,7 @@ DEFAULT_MAX_TOKENS = 100
 DEFAULT_TEMPERATURE = 0.7
 DEFAULT_TOP_P = 0.9
 DEFAULT_REPETITION_PENALTY = 1.1
+DO_SAMPLE = not DEBUG  # Set to False for debug mode
 
 # API configuration
 API_HOST = "0.0.0.0"

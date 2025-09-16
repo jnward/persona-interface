@@ -17,6 +17,7 @@ class GenerationRequest(BaseModel):
     messages: List[Message]
     steering_config: Dict[str, Dict[int, float]] = {"pc_values": {}}
     num_tokens: int = 100
+    is_partial: bool = False  # If True, last assistant message is incomplete (for step mode)
 
 
 class GenerationResponse(BaseModel):

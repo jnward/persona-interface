@@ -102,7 +102,8 @@ async def generate(request: GenerationRequest):
             tokenizer=TOKENIZER,
             messages=messages,
             num_tokens=request.num_tokens,
-            steering_config=request.steering_config if pc_values else None
+            steering_config=request.steering_config if pc_values else None,
+            is_partial=request.is_partial
         )
 
         return GenerationResponse(

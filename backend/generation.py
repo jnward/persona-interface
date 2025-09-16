@@ -8,13 +8,14 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import config
 
 
-def format_messages_for_chat(tokenizer: AutoTokenizer, messages: List[Dict[str, str]]) -> str:
+def format_messages_for_chat(tokenizer: AutoTokenizer, messages: List[Dict[str, str]], is_partial: bool = False) -> str:
     """
     Apply the chat template to a list of messages.
 
     Args:
         tokenizer: The tokenizer with chat template
         messages: List of message dicts with 'role' and 'content'
+        is_partial: If True and last message is from assistant, don't close the turn
 
     Returns:
         Formatted string ready for tokenization
@@ -22,12 +23,38 @@ def format_messages_for_chat(tokenizer: AutoTokenizer, messages: List[Dict[str, 
     # Convert to the format expected by apply_chat_template
     formatted_messages = [{"role": m["role"], "content": m["content"]} for m in messages]
 
-    # Apply chat template
-    formatted = tokenizer.apply_chat_template(
-        formatted_messages,
-        tokenize=False,
-        add_generation_prompt=True
-    )
+    # Check if we need to preserve trailing whitespace
+    trailing_spaces = ""
+    if is_partial and messages and messages[-1]["role"] == "assistant":
+        # The tokenizer strips trailing whitespace, so we need to preserve it
+        original_content = messages[-1]["content"]
+        if original_content:
+            # Count trailing spaces
+            stripped_content = original_content.rstrip()
+            if len(stripped_content) < len(original_content):
+                trailing_spaces = original_content[len(stripped_content):]
+
+        # Use continue_final_message for partial assistant messages
+        formatted = tokenizer.apply_chat_template(
+            formatted_messages,
+            tokenize=False,
+            continue_final_message=True
+        )
+
+        # Re-add the trailing spaces that were stripped
+        formatted = formatted + trailing_spaces
+
+        # Debug logging
+        import config
+        if hasattr(config, 'DEBUG') and config.DEBUG:
+            print(f"DEBUG: is_partial=True, added {repr(trailing_spaces)}, prompt ending: ...{repr(formatted[-50:])}")
+    else:
+        # Normal formatting for non-partial messages
+        formatted = tokenizer.apply_chat_template(
+            formatted_messages,
+            tokenize=False,
+            add_generation_prompt=True
+        )
 
     return formatted
 
@@ -65,7 +92,8 @@ def generate_text(
     num_tokens: int,
     steering_config: Optional[Dict[str, Dict[int, float]]] = None,
     temperature: float = None,
-    top_p: float = None
+    top_p: float = None,
+    is_partial: bool = False
 ) -> Tuple[str, bool]:
     """
     Generate text from a conversation with optional steering.
@@ -78,6 +106,7 @@ def generate_text(
         steering_config: Optional steering configuration (will be used in Phase 2)
         temperature: Sampling temperature (uses default if None)
         top_p: Top-p sampling parameter (uses default if None)
+        is_partial: If True, last assistant message is incomplete (for step mode)
 
     Returns:
         Tuple of (generated_text, terminating_flag)
@@ -89,7 +118,7 @@ def generate_text(
         top_p = config.DEFAULT_TOP_P
 
     # Format messages with chat template
-    formatted_prompt = format_messages_for_chat(tokenizer, messages)
+    formatted_prompt = format_messages_for_chat(tokenizer, messages, is_partial=is_partial)
 
     # Tokenize
     inputs = tokenizer(formatted_prompt, return_tensors="pt")
@@ -106,7 +135,7 @@ def generate_text(
             max_new_tokens=num_tokens,
             temperature=temperature,
             top_p=top_p,
-            do_sample=True,
+            do_sample=config.DO_SAMPLE,
             pad_token_id=tokenizer.eos_token_id,
             repetition_penalty=config.DEFAULT_REPETITION_PENALTY
         )
@@ -132,7 +161,7 @@ def generate_text(
             clean_text = clean_text[:-len(token)]
             break
 
-    return clean_text.strip(), terminating
+    return clean_text, terminating
 
 
 def generate_text_with_steering(

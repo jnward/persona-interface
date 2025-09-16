@@ -92,49 +92,88 @@ def test_conversation():
         return False
 
 
-def test_step_mode():
-    """Test step-by-step generation (num_tokens=1)."""
-    print("\nTesting step-by-step mode...")
+def test_step_mode_comparison():
+    """Compare regular generation with step-by-step to ensure they match."""
+    print("\nTesting step mode vs regular generation (deterministic)...")
 
-    # First token
+    prompt = "Count to five:"
+    num_tokens = 10
+
+    # First, generate normally
+    print(f"\n1. Generating {num_tokens} tokens normally...")
     request_data = {
         "messages": [
-            {"role": "user", "content": "Count to five:"}
+            {"role": "user", "content": prompt}
         ],
         "steering_config": {"pc_values": {}},
-        "num_tokens": 1
+        "num_tokens": num_tokens,
+        "is_partial": False
     }
 
-    print("Generating one token at a time...")
-    accumulated = ""
+    response = requests.post(f"{API_URL}/api/generate", json=request_data)
+    if response.status_code != 200:
+        print(f"Error in normal generation: {response.text}")
+        return False
 
-    for i in range(10):
-        response = requests.post(
-            f"{API_URL}/api/generate",
-            json=request_data
-        )
+    normal_result = response.json()
+    normal_text = normal_result['content']
+    print(f"Normal generation: '{normal_text}'")
 
-        if response.status_code == 200:
-            result = response.json()
-            token = result['content']
-            accumulated += token
-            print(f"Token {i+1}: '{token}' (terminating: {result['terminating']})")
+    # Now generate step-by-step
+    print(f"\n2. Generating {num_tokens} tokens step-by-step...")
+    request_data = {
+        "messages": [
+            {"role": "user", "content": prompt}
+        ],
+        "steering_config": {"pc_values": {}},
+        "num_tokens": 1,
+        "is_partial": False
+    }
 
-            # Add the generated token to the assistant message for next request
-            if len(request_data["messages"]) == 1:
-                request_data["messages"].append({"role": "assistant", "content": token})
-            else:
-                request_data["messages"][-1]["content"] += token
-
-            if result['terminating']:
-                print(f"Generation terminated naturally after {i+1} tokens")
-                break
-        else:
-            print(f"Error: {response.text}")
+    step_accumulated = ""
+    for i in range(num_tokens):
+        response = requests.post(f"{API_URL}/api/generate", json=request_data)
+        if response.status_code != 200:
+            print(f"Error in step {i+1}: {response.text}")
             return False
 
-    print(f"Accumulated response: {accumulated}")
-    return True
+        result = response.json()
+        token = result['content']
+        step_accumulated += token
+        print(f"  Step {i+1}: got '{token}'")
+
+        # Update messages for next request
+        if len(request_data["messages"]) == 1:
+            request_data["messages"].append({"role": "assistant", "content": token})
+        else:
+            request_data["messages"][-1]["content"] += token
+
+        request_data["is_partial"] = True
+
+        # Stop early if model signals termination
+        if result['terminating']:
+            print(f"  (terminated after {i+1} tokens)")
+            break
+
+    print(f"\nStep-by-step result: '{step_accumulated}'")
+
+    # Compare results
+    print("\n3. Comparison:")
+    if normal_text == step_accumulated:
+        print("✓ SUCCESS: Both methods produced identical output!")
+        return True
+    else:
+        print("✗ FAILURE: Outputs differ!")
+        print(f"  Normal:      '{normal_text}'")
+        print(f"  Step-by-step: '{step_accumulated}'")
+
+        # Find where they diverge
+        for i, (c1, c2) in enumerate(zip(normal_text, step_accumulated)):
+            if c1 != c2:
+                print(f"  First difference at position {i}: '{c1}' vs '{c2}'")
+                break
+
+        return False
 
 
 def main():
@@ -152,7 +191,7 @@ def main():
         ("Info Endpoint", test_info_endpoint),
         ("Basic Generation", test_basic_generation),
         ("Conversation", test_conversation),
-        ("Step Mode", test_step_mode)
+        ("Step Mode Comparison", test_step_mode_comparison)
     ]
 
     results = []

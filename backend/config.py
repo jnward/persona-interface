@@ -1,7 +1,7 @@
 """
 Configuration settings for the persona steering backend.
 """
-DEBUG = True
+DEBUG = False
 
 # Model configuration
 MODEL_NAME = "google/gemma-3-12b-it"

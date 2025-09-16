@@ -1,0 +1,33 @@
+.message {
+  padding: 12px 16px;
+  margin: 8px 0;
+  border-radius: 8px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.user {
+  background-color: #e3f2fd;
+  margin-left: auto;
+  border: 1px solid #90caf9;
+}
+
+.assistant {
+  background-color: #f5f5f5;
+  margin-right: auto;
+  border: 1px solid #e0e0e0;
+}
+
+.role {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.content {
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}

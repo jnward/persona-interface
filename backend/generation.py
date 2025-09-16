@@ -10,6 +10,58 @@ import config
 from steering import apply_steering
 
 
+def validate_messages(messages: List[Dict[str, str]], is_partial: bool = False):
+    """
+    Validate that messages follow expected format and constraints.
+
+    Args:
+        messages: List of message dicts with 'role' and 'content'
+        is_partial: Whether the last assistant message is incomplete
+
+    Raises:
+        ValueError: If validation fails
+    """
+    if not messages:
+        raise ValueError("Messages list cannot be empty")
+
+    # Validate each message has correct structure
+    for i, msg in enumerate(messages):
+        if "role" not in msg:
+            raise ValueError(f"Message {i} missing 'role' field")
+        if "content" not in msg:
+            raise ValueError(f"Message {i} missing 'content' field")
+
+        # Validate role
+        if msg["role"] not in ["user", "assistant"]:
+            raise ValueError(f"Invalid role '{msg['role']}' in message {i}. Must be 'user' or 'assistant'")
+
+        # Content must be a string (but can be empty)
+        if not isinstance(msg["content"], str):
+            raise ValueError(f"Message {i} content must be a string")
+
+    # First message must be from user
+    if messages[0]["role"] != "user":
+        raise ValueError("First message must be from user")
+
+    # Validate alternating pattern
+    for i in range(len(messages)):
+        expected_role = "user" if i % 2 == 0 else "assistant"
+        if messages[i]["role"] != expected_role:
+            raise ValueError(f"Messages must alternate between user and assistant. "
+                           f"Message {i} should be '{expected_role}' but is '{messages[i]['role']}')")
+
+    # If is_partial=True, last message must be from assistant
+    if is_partial:
+        if len(messages) < 2:
+            raise ValueError("Cannot use is_partial=True with only a user message")
+        if messages[-1]["role"] != "assistant":
+            raise ValueError("Cannot continue a user message. Only assistant messages can be partial (is_partial=True)")
+    else:
+        # If not partial, last message should typically be from user (unless continuing a conversation)
+        # But we allow both cases for flexibility
+        pass
+
+
 def format_messages_for_chat(tokenizer: AutoTokenizer, messages: List[Dict[str, str]], is_partial: bool = False) -> str:
     """
     Apply the chat template to a list of messages.
@@ -114,7 +166,13 @@ def generate_text(
 
     Returns:
         Tuple of (generated_text, terminating_flag)
+
+    Raises:
+        ValueError: If message validation fails
     """
+    # Validate messages first
+    validate_messages(messages, is_partial)
+
     # Use defaults if not specified
     if temperature is None:
         temperature = config.DEFAULT_TEMPERATURE

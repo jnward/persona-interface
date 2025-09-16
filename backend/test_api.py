@@ -162,6 +162,175 @@ def test_multiple_pc_steering():
     return True
 
 
+def test_message_validation():
+    """Test message validation rules."""
+    print("\nTesting message validation...")
+
+    test_cases = [
+        {
+            "name": "is_partial with user message",
+            "request": {
+                "messages": [
+                    {"role": "user", "content": "Hello"}
+                ],
+                "steering_config": {"pc_values": {}},
+                "num_tokens": 10,
+                "is_partial": True
+            },
+            "should_fail": True,
+            "expected_error": "Cannot use is_partial=True with only a user message"
+        },
+        {
+            "name": "is_partial with user as last message",
+            "request": {
+                "messages": [
+                    {"role": "user", "content": "Hello"},
+                    {"role": "assistant", "content": "Hi there"},
+                    {"role": "user", "content": "How are you?"}
+                ],
+                "steering_config": {"pc_values": {}},
+                "num_tokens": 10,
+                "is_partial": True
+            },
+            "should_fail": True,
+            "expected_error": "Cannot continue a user message"
+        },
+        {
+            "name": "Non-alternating messages (two users)",
+            "request": {
+                "messages": [
+                    {"role": "user", "content": "Hello"},
+                    {"role": "user", "content": "Are you there?"}
+                ],
+                "steering_config": {"pc_values": {}},
+                "num_tokens": 10
+            },
+            "should_fail": True,
+            "expected_error": "Messages must alternate"
+        },
+        {
+            "name": "Non-alternating messages (two assistants)",
+            "request": {
+                "messages": [
+                    {"role": "user", "content": "Hello"},
+                    {"role": "assistant", "content": "Hi"},
+                    {"role": "assistant", "content": "How can I help?"}
+                ],
+                "steering_config": {"pc_values": {}},
+                "num_tokens": 10
+            },
+            "should_fail": True,
+            "expected_error": "Messages must alternate"
+        },
+        {
+            "name": "Starting with assistant message",
+            "request": {
+                "messages": [
+                    {"role": "assistant", "content": "Hello"}
+                ],
+                "steering_config": {"pc_values": {}},
+                "num_tokens": 10
+            },
+            "should_fail": True,
+            "expected_error": "First message must be from user"
+        },
+        {
+            "name": "Invalid role",
+            "request": {
+                "messages": [
+                    {"role": "system", "content": "You are helpful"}
+                ],
+                "steering_config": {"pc_values": {}},
+                "num_tokens": 10
+            },
+            "should_fail": True,
+            "expected_error": "Input should be 'user' or 'assistant'"
+        },
+        {
+            "name": "Empty messages list",
+            "request": {
+                "messages": [],
+                "steering_config": {"pc_values": {}},
+                "num_tokens": 10
+            },
+            "should_fail": True,
+            "expected_error": "Messages list cannot be empty"
+        },
+        {
+            "name": "Valid: single user message",
+            "request": {
+                "messages": [
+                    {"role": "user", "content": "Hello"}
+                ],
+                "steering_config": {"pc_values": {}},
+                "num_tokens": 10
+            },
+            "should_fail": False
+        },
+        {
+            "name": "Valid: empty content",
+            "request": {
+                "messages": [
+                    {"role": "user", "content": ""}
+                ],
+                "steering_config": {"pc_values": {}},
+                "num_tokens": 10
+            },
+            "should_fail": False
+        },
+        {
+            "name": "Valid: proper alternation with is_partial",
+            "request": {
+                "messages": [
+                    {"role": "user", "content": "Hello"},
+                    {"role": "assistant", "content": "Hi"}
+                ],
+                "steering_config": {"pc_values": {}},
+                "num_tokens": 10,
+                "is_partial": True
+            },
+            "should_fail": False
+        }
+    ]
+
+    passed = 0
+    failed = 0
+
+    for test_case in test_cases:
+        print(f"\n  Testing: {test_case['name']}")
+        response = requests.post(f"{API_URL}/api/generate", json=test_case["request"])
+
+        if test_case["should_fail"]:
+            if response.status_code != 200:
+                error_detail = response.json().get("detail", "")
+                # Handle both string errors and Pydantic validation error arrays
+                if isinstance(error_detail, list):
+                    # Pydantic validation errors
+                    error_str = str(error_detail)
+                else:
+                    error_str = error_detail
+
+                if test_case["expected_error"] in error_str:
+                    print(f"    ✓ Failed as expected: {str(error_str)[:60]}...")
+                    passed += 1
+                else:
+                    print(f"    ✗ Failed with unexpected error: {str(error_str)[:60]}...")
+                    failed += 1
+            else:
+                print(f"    ✗ Should have failed but succeeded")
+                failed += 1
+        else:
+            if response.status_code == 200:
+                print(f"    ✓ Succeeded as expected")
+                passed += 1
+            else:
+                print(f"    ✗ Should have succeeded but failed: {response.json().get('detail', '')[:60]}...")
+                failed += 1
+
+    print(f"\n  Summary: {passed} passed, {failed} failed")
+    return failed == 0
+
+
 def test_step_mode_comparison():
     """Compare regular generation with step-by-step to ensure they match."""
     print("\nTesting step mode vs regular generation (deterministic)...")
@@ -261,6 +430,7 @@ def main():
         ("Info Endpoint", test_info_endpoint),
         ("Basic Generation", test_basic_generation),
         ("Conversation", test_conversation),
+        ("Message Validation", test_message_validation),
         ("Steering Basic", test_steering_basic),
         ("Multiple PC Steering", test_multiple_pc_steering),
         ("Step Mode Comparison", test_step_mode_comparison)

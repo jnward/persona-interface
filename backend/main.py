@@ -96,20 +96,25 @@ async def generate(request: GenerationRequest):
         pc_values = request.steering_config.get("pc_values", {})
 
         # Generate with steering if PC values are provided
-        content, terminating = generate_text(
-            model=MODEL,
-            tokenizer=TOKENIZER,
-            messages=messages,
-            num_tokens=request.num_tokens,
-            pca_vectors=PCA_COMPONENTS,
-            steering_config=request.steering_config if pc_values else None,
-            is_partial=request.is_partial
-        )
+        try:
+            content, terminating = generate_text(
+                model=MODEL,
+                tokenizer=TOKENIZER,
+                messages=messages,
+                num_tokens=request.num_tokens,
+                pca_vectors=PCA_COMPONENTS,
+                steering_config=request.steering_config if pc_values else None,
+                is_partial=request.is_partial
+            )
 
-        return GenerationResponse(
-            content=content,
-            terminating=terminating
-        )
+            return GenerationResponse(
+                content=content,
+                terminating=terminating
+            )
+        except ValueError as e:
+            # Return validation errors with 400 status
+            print(f"Validation error: {e}")
+            raise HTTPException(status_code=400, detail=str(e))
 
     except Exception as e:
         print(f"Error during generation: {e}")

@@ -1,6 +1,6 @@
 # Persona Steering Backend
 
-Minimal FastAPI backend for steering Gemma-3-12b with PCA-based persona vectors.
+Minimal FastAPI backend for steering Gemma-3 with PCA-based persona vectors.
 
 ## Phase 1 Status: ✅ Complete
 
@@ -18,7 +18,7 @@ Minimal FastAPI backend for steering Gemma-3-12b with PCA-based persona vectors.
 backend/
 ├── main.py              # FastAPI application with single endpoint
 ├── generation.py        # Text generation logic
-├── model_manager.py     # Model and PCA vector loading
+├── model_utils.py       # Model and PCA vector loading
 ├── steering.py          # Steering implementation (ready for Phase 2)
 ├── schemas.py          # Pydantic models
 ├── config.py           # Configuration settings
@@ -42,9 +42,15 @@ python main.py
 ```
 
 The server will:
-1. Load the Gemma-3-12b-it model
-2. Load PCA vectors from `/workspace/persona-subspace/roles/pca/layer22_pos23.pt`
-3. Start listening on `http://localhost:8000`
+1. Read `model_config.json` to determine which Gemma model to load
+2. Resolve the target device (set `"device": "auto"` to pick CUDA → MPS → CPU)
+3. Load the selected model (defaults to `google/gemma-3-12b-it`)
+4. Load the matching PCA vectors from `backend/pca/<model>_pca.pt`
+5. Start listening on `http://localhost:8000`
+
+### Selecting a Model
+
+Edit `backend/model_config.json` to switch between `google/gemma-3-12b-it` and `google/gemma-3-4b-it` (or add new entries). Update `current_model` and ensure the `pca_path` points to the corresponding PCA file.
 
 ### 3. Test the API
 ```bash

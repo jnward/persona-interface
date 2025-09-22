@@ -1,0 +1,20 @@
+{
+  "current_model": "google/gemma-3-12b-it",
+  "models": {
+    "google/gemma-3-12b-it": {
+      "device": "auto",
+      "pca_path": "pca/gemma-3-12b-it_pca.pt",
+      "steering_layer": 22
+    },
+    "google/gemma-3-4b-it": {
+      "device": "auto",
+      "pca_path": "pca/gemma-3-4b-it_pca.pt",
+      "steering_layer": 16
+    },
+    "google/gemma-3-1b-it": {
+      "device": "auto",
+      "pca_path": "pca/gemma-3-1b-it_pca.pt",
+      "steering_layer": 12
+    }
+  }
+}

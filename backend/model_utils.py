@@ -8,6 +8,21 @@ from typing import Tuple
 import numpy as np
 
 
+def resolve_device(device: str) -> str:
+    """Resolve a device string, supporting an 'auto' option."""
+
+    if device.lower() != "auto":
+        return device
+
+    if torch.cuda.is_available():
+        return "cuda:0"
+
+    if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+        return "mps"
+
+    return "cpu"
+
+
 def load_model(model_name: str, device: str = "cuda:0") -> Tuple[AutoModelForCausalLM, AutoTokenizer]:
     """
     Load model and tokenizer.
@@ -27,12 +42,15 @@ def load_model(model_name: str, device: str = "cuda:0") -> Tuple[AutoModelForCau
         tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "left"
 
-    print(f"Loading model {model_name} to {device}...")
+    resolved_device = resolve_device(device)
+    if resolved_device != device:
+        print(f"Resolved device '{device}' -> '{resolved_device}'")
+    print(f"Loading model {model_name} to {resolved_device}...")
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         dtype=torch.bfloat16
     )
-    model = model.to(device)
+    model = model.to(resolved_device)
     model.eval()
 
     # Gemma3 uses 'hidden_act_dim' instead of 'hidden_size'

@@ -18,7 +18,10 @@ export default function ChatInterface() {
     addMessage,
     clearMessages,
     setGenerating,
-    setError
+    setError,
+    appendToAssistantMessage,
+    setContinuationIndex,
+    continuationIndex
   } = useChatStore();
 
   const { getPCValues } = useSteeringStore();
@@ -50,12 +53,48 @@ export default function ChatInterface() {
 
       addMessage({
         role: 'assistant',
-        content: response.content
+        content: response.content,
+        terminating: response.terminating
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Generation failed');
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleContinue = async (index: number) => {
+    if (isGenerating) return;
+
+    setError(null);
+    setGenerating(true);
+    setContinuationIndex(index);
+
+    try {
+      const currentMessages = useChatStore.getState().messages;
+      const lastIndex = currentMessages.length - 1;
+
+      if (
+        index !== lastIndex ||
+        currentMessages[index]?.role !== 'assistant' ||
+        currentMessages[index]?.terminating !== false
+      ) {
+        throw new Error('Message is not eligible for continuation');
+      }
+
+      const response = await generateText(
+        currentMessages,
+        getPCValues(),
+        numTokens,
+        true
+      );
+
+      appendToAssistantMessage(index, response.content, response.terminating);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Generation failed');
+    } finally {
+      setGenerating(false);
+      setContinuationIndex(null);
     }
   };
 
@@ -78,9 +117,23 @@ export default function ChatInterface() {
             Start a conversation by typing a message below
           </div>
         ) : (
-          messages.map((msg, idx) => (
-            <Message key={idx} role={msg.role} content={msg.content} />
-          ))
+          messages.map((msg, idx) => {
+            const canContinue =
+              msg.role === 'assistant' &&
+              msg.terminating === false &&
+              idx === messages.length - 1;
+
+            return (
+              <Message
+                key={idx}
+                role={msg.role}
+                content={msg.content}
+                terminating={msg.terminating}
+                onContinue={canContinue ? () => handleContinue(idx) : undefined}
+                isContinuing={continuationIndex === idx && isGenerating}
+              />
+            );
+          })
         )}
         {isGenerating && (
           <div className={styles.generating}>Generating...</div>

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "export": "rm -rf out && next build"
   },
   "dependencies": {
     "next": "15.5.3",

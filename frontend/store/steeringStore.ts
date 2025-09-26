@@ -13,6 +13,7 @@ interface SteeringState {
   setPCValue: (pcIndex: number, value: number) => void;
   resetPC: (pcIndex: number) => void;
   resetAll: () => void;
+  randomize: () => void;
   getPCValues: () => Record<string, number>;
 }
 
@@ -36,6 +37,25 @@ export const useSteeringStore = create<SteeringState>((set, get) => ({
 
   resetAll: () =>
     set({ pcValues: {} }),
+
+  randomize: () =>
+    set(() => {
+      const randomized: Record<number, number> = {};
+
+      for (let i = 0; i < 10; i += 1) {
+        if (Math.random() < 0.5) {
+          continue;
+        }
+
+        const u1 = Math.random() || Number.EPSILON;
+        const u2 = Math.random();
+        const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        const value = Math.max(-3000, Math.min(3000, Math.round(z0 * 1250)));
+        randomized[i] = value;
+      }
+
+      return { pcValues: randomized };
+    }),
 
   getPCValues: () => {
     // Convert to string keys for API

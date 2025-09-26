@@ -231,8 +231,7 @@ def test_message_validation():
                 "steering_config": {"pc_values": {}},
                 "num_tokens": 10
             },
-            "should_fail": True,
-            "expected_error": "First message must be from user"
+            "should_fail": False
         },
         {
             "name": "Invalid role",

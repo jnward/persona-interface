@@ -4,6 +4,7 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   terminating?: boolean;
+  generatedByModel?: boolean;
 }
 
 interface ChatState {
@@ -12,6 +13,7 @@ interface ChatState {
   error: string | null;
   numTokens: number;
   continuationIndex: number | null;
+  autoRun: boolean;
 
   // Actions
   addMessage: (message: Message) => void;
@@ -21,8 +23,9 @@ interface ChatState {
   setNumTokens: (tokens: number) => void;
   removeLastMessage: () => void;
   updateLastMessage: (content: string, terminating?: boolean) => void;
-  appendToAssistantMessage: (index: number, content: string, terminating: boolean) => void;
+  appendToMessage: (index: number, content: string, terminating: boolean) => void;
   setContinuationIndex: (index: number | null) => void;
+  setAutoRun: (value: boolean) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -31,6 +34,7 @@ export const useChatStore = create<ChatState>((set) => ({
   error: null,
   numTokens: 50,
   continuationIndex: null,
+  autoRun: false,
 
   addMessage: (message) =>
     set((state) => ({ messages: [...state.messages, message] })),
@@ -67,11 +71,10 @@ export const useChatStore = create<ChatState>((set) => ({
       return { messages };
     }),
 
-  appendToAssistantMessage: (index, content, terminating) =>
+  appendToMessage: (index, content, terminating) =>
     set((state) => {
       if (index < 0 || index >= state.messages.length) return state;
       const target = state.messages[index];
-      if (target.role !== 'assistant') return state;
 
       const messages = [...state.messages];
       messages[index] = {
@@ -85,4 +88,7 @@ export const useChatStore = create<ChatState>((set) => ({
 
   setContinuationIndex: (index) =>
     set({ continuationIndex: index }),
+
+  setAutoRun: (value) =>
+    set({ autoRun: value }),
 }));

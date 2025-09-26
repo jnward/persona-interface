@@ -39,16 +39,23 @@ def validate_messages(messages: List[Dict[str, str]], is_partial: bool = False):
         if not isinstance(msg["content"], str):
             raise ValueError(f"Message {i} content must be a string")
 
-    # First message must be from user
-    if messages[0]["role"] != "user":
-        raise ValueError("First message must be from user")
+    # Determine starting role and ensure alternation matches
+    starting_role = messages[0]["role"]
+    if starting_role not in ["user", "assistant"]:
+        raise ValueError("First message must have role 'user' or 'assistant'")
 
-    # Validate alternating pattern
-    for i in range(len(messages)):
-        expected_role = "user" if i % 2 == 0 else "assistant"
-        if messages[i]["role"] != expected_role:
-            raise ValueError(f"Messages must alternate between user and assistant. "
-                           f"Message {i} should be '{expected_role}' but is '{messages[i]['role']}')")
+    def expected_role_for_index(index: int) -> str:
+        if starting_role == "user":
+            return "user" if index % 2 == 0 else "assistant"
+        return "assistant" if index % 2 == 0 else "user"
+
+    for i, msg in enumerate(messages):
+        expected_role = expected_role_for_index(i)
+        if msg["role"] != expected_role:
+            raise ValueError(
+                "Messages must alternate between user and assistant. "
+                f"Message {i} should be '{expected_role}' but is '{msg['role']}'"
+            )
 
     # If is_partial=True, last message must be from assistant
     if is_partial:

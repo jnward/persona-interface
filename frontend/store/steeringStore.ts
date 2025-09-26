@@ -1,5 +1,11 @@
 import { create } from 'zustand';
 
+const DEFAULT_PC_VALUES: Record<number, number> = {
+  0: 800,
+  1: -1600,
+  6: -1800
+};
+
 interface SteeringState {
   pcValues: Record<number, number>;
 
@@ -11,7 +17,7 @@ interface SteeringState {
 }
 
 export const useSteeringStore = create<SteeringState>((set, get) => ({
-  pcValues: {},
+  pcValues: { ...DEFAULT_PC_VALUES },
 
   setPCValue: (pcIndex, value) =>
     set((state) => ({

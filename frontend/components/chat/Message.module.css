@@ -18,12 +18,25 @@
   border: 1px solid #e0e0e0;
 }
 
-.role {
+.roleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.roleLabel {
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   color: #666;
-  margin-bottom: 4px;
+}
+
+.generatedTag {
+  font-size: 11px;
+  font-weight: 500;
+  color: #999;
+  text-transform: none;
 }
 
 .content {

@@ -1,9 +1,15 @@
 .container {
   display: flex;
+  flex-direction: column;
   gap: 8px;
   padding: 16px;
   border-top: 1px solid #e0e0e0;
   background-color: white;
+}
+
+.inputRow {
+  display: flex;
+  gap: 8px;
 }
 
 .textarea {
@@ -37,7 +43,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
-  align-self: flex-end;
+  align-self: flex-start;
 }
 
 .sendButton:hover:not(:disabled) {
@@ -47,4 +53,45 @@
 .sendButton:disabled {
   background-color: #ccc;
   cursor: not-allowed;
+}
+
+.generateButton {
+  padding: 10px 18px;
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background-color 0.2s;
+}
+
+.generateButton:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+.generateButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.actionsRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.autoRunToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #555;
+  user-select: none;
+}
+
+.autoRunToggle input {
+  accent-color: #2196f3;
 }
